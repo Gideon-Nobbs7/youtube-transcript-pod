@@ -30,10 +30,18 @@ def get_channel_videos(api_key, channel_id):
 
 
 def get_video_transcript(video_id):
+    languages = ["en"]
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+
+        try:
+            transcript = transcript_list.find_manually_created_transcript(languages)
+        except:  # noqa: E722
+            transcript = transcript_list.find_generated_transcript(languages)
+
         transcript_text = " ".join([entry["text"] for entry in transcript])
         return transcript_text
+
     except Exception as e:
         print(f"Error fetching transcript for video {video_id}: {e}")
         return None
