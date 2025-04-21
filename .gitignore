@@ -6,4 +6,6 @@ transcripts
 
 .venv
 
+.env
+
 __pycache__

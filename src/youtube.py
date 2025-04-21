@@ -31,15 +31,25 @@ def get_channel_videos(api_key, channel_id):
     return video_data
 
 
-def get_video_transcript(video_id):
-    languages = ["en"]
-    try:
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+def get_video_data(api_key, video_link):
+    youtube = build("youtube", "v3", developerKey=api_key)
+    video_id = video_link.split("=")[1]
+    video_data = []
 
-        try:
-            transcript = transcript_list.find_manually_created_transcript(languages)
-        except:  # noqa: E722
-            transcript = transcript_list.find_generated_transcript(languages)
+    request = youtube.videos().list(part="id,snippet", id=video_id)
+    response = request.execute()
+
+    for item in response["items"]:
+        video_id = video_id
+        video_title = item["snippet"]["title"]
+        video_data.append((video_id, video_title))
+
+    return video_data
+
+
+def get_video_transcript(video_id):
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
 
         transcript_text = " ".join([entry["text"] for entry in transcript])
         return transcript_text
@@ -49,23 +59,16 @@ def get_video_transcript(video_id):
         return None
 
 
-def save_transcript(video_id, video_title, transcript, category, output_dir):
-    sanitized_title = "".join(
-        c if c.isalnum() or c in (" ", "_") else "_" for c in video_title
-    )
-    sanitized_category = "".join(
-        c if c.isalnum() or c in (" ", "_") else "_" for c in category
-    )
+def save_transcript(video_id, video_title, transcript, output_dir):
+    if transcript:
+        sanitized_title = "".join(
+            c if c.isalnum() or c in (" ", "_") else "_" for c in video_title
+        )
 
-    category_folder = os.path.join(output_dir, sanitized_category)
-    if not os.path.exists(category_folder):
-        os.makedirs(category_folder)
-
-    filename = os.path.join(category_folder, f"{video_id}_{sanitized_title}.txt")
-    with open(filename, "w", encoding="utf-8") as file:
-        file.write(transcript)
-    print(
-        f"Transcript saved for video {video_id}: {video_title} (Category: {category})"
-    )
-
-    return filename
+        filename = os.path.join(output_dir, f"{sanitized_title}.txt")
+        with open(filename, "w", encoding="utf-8") as file:
+            file.write(transcript)
+        print(f"Transcript saved for video {video_id}: {video_title})")
+        return filename
+    else:
+        print(f"There is no transcript for video: {video_title}")
