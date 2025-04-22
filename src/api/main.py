@@ -5,11 +5,11 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
 
 # from utils.main import main_utils
 from ..utils.main import main_utils
-from .model import YtPodModel
+from .db_config import supabase
+from .model import YtPodCreate, YtPodModel
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,9 +34,7 @@ app.add_middleware(
 )
 
 
-app.get("/health", summary="Check health service")
-
-
+@app.get("/health", summary="Check health service")
 async def server_status():
     """
     Simple health check endpoint
@@ -45,13 +43,18 @@ async def server_status():
     return {"status": status.HTTP_200_OK}
 
 
-@app.post("/transcript")
-async def get_transcript(video: YtPodModel):
+@app.post(
+    "/transcript",
+    response_model=YtPodModel,
+    status_code=201,
+    summary="Get a transcript",
+)
+async def get_transcript(video: YtPodCreate):
     """ "
     Gets a youtube video's transcript
     """
     video_data = main_utils(
-        youtube_api_key=os.getenv("YOUTUBE_API_KEY"), video_link=video.video_link
+        youtube_api_key=os.getenv("YOUTUBE_API_KEY"), video_link=video.video_url
     )
 
     if not video_data:
@@ -61,12 +64,23 @@ async def get_transcript(video: YtPodModel):
             detail="Video or its transcript could not be found",
         )
     video_title, video_transcript = video_data
-    
-    return PlainTextResponse(
-        content=video_transcript,
-        headers={"Content-Disposition": f"attachment; filename={video_title}.txt"},
-    )
 
+    # return PlainTextResponse(
+    #     content=video_transcript,
+    #     headers={"Content-Disposition": f"attachment; filename={video_title}.txt"},
+    # )
+    response = (
+        supabase.table("trypod")
+        .insert(
+            {
+                "video_title": video_title,
+                "video_url": video.video_url,
+                "transcript": video_transcript,
+            }
+        )
+        .execute()
+    )
+    return response
 
 
 if __name__ == "__main__":

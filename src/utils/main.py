@@ -35,5 +35,3 @@ def main_utils(youtube_api_key: str, video_link: str):
         )
         return (video_title, transcript)
         # write_to_csv(video_id, csv_file, video_title, transcript_file_path)
-
-
