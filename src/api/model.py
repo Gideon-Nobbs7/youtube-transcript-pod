@@ -9,4 +9,4 @@ class YtPodModel(YtPodCreate):
     id: str
     created_at: str
     video_title: str
-    transcript: str    
+    transcript: str

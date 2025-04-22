@@ -1,5 +1,7 @@
-from fpdf import FPDF
 from io import BytesIO
+
+from fpdf import FPDF
+
 
 def generate_pdf_bytes(transcript_text: str) -> BytesIO:
     pdf = FPDF()
@@ -10,6 +12,5 @@ def generate_pdf_bytes(transcript_text: str) -> BytesIO:
     for line in transcript_text.splitlines():
         pdf.multi_cell(0, 10, line)
 
-    pdf_output = pdf.output(dest='S').encode('latin1')
+    pdf_output = pdf.output(dest="S").encode("latin1")
     return BytesIO(pdf_output)
-

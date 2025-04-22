@@ -11,21 +11,20 @@ from ..utils.main import main_utils
 from ..utils.txt_to_pdf import generate_pdf_bytes
 from .db_config import supabase
 from .model import YtPodCreate, YtPodModel
-from .supa_store import upload_to_store, get_file_url
-
+from .supa_store import get_file_url, upload_to_store
 
 LOG_DIR = "logs"
 LOG_FILE = "app.log"
 
 # Ensure log directory exists
-os.makedirs(LOG_DIR, exist_ok=True) 
+os.makedirs(LOG_DIR, exist_ok=True)
 
 
 logging.basicConfig(
     level=logging.INFO,
     handlers=[
         logging.FileHandler(os.path.join("logs", "app.log"), mode="a", encoding="utf-8")
-    ]
+    ],
 )
 logger = logging.getLogger(__name__)
 
