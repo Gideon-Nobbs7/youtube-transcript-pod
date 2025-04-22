@@ -8,10 +8,25 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # from utils.main import main_utils
 from ..utils.main import main_utils
+from ..utils.txt_to_pdf import generate_pdf_bytes
 from .db_config import supabase
 from .model import YtPodCreate, YtPodModel
+from .supa_store import upload_to_store, get_file_url
 
-logging.basicConfig(level=logging.INFO)
+
+LOG_DIR = "logs"
+LOG_FILE = "app.log"
+
+# Ensure log directory exists
+os.makedirs(LOG_DIR, exist_ok=True) 
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[
+        logging.FileHandler(os.path.join("logs", "app.log"), mode="a", encoding="utf-8")
+    ]
+)
 logger = logging.getLogger(__name__)
 
 
@@ -65,22 +80,27 @@ async def get_transcript(video: YtPodCreate):
         )
     video_title, video_transcript = video_data
 
-    # return PlainTextResponse(
-    #     content=video_transcript,
-    #     headers={"Content-Disposition": f"attachment; filename={video_title}.txt"},
-    # )
+    generated_pdf_bytes = generate_pdf_bytes(video_transcript)
+    generated_pdf_bytes.seek(0)
+    try:
+        upload_to_store(video_title, generated_pdf_bytes.read())
+    except Exception as e:
+        logger.warning(f"Error uploading file to supabase bucket: {str(e)}")
+
+    transcript_url = get_file_url(video_title)
+
     response = (
         supabase.table("trypod")
         .insert(
             {
                 "video_title": video_title,
                 "video_url": video.video_url,
-                "transcript": video_transcript,
+                "transcript": transcript_url,
             }
         )
         .execute()
     )
-    return response
+    return response.data[0]
 
 
 if __name__ == "__main__":
