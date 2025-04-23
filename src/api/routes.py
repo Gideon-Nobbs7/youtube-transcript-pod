@@ -25,7 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def transcript_route(video: YtPodCreate):
+async def transcript_route(video: YtPodCreate):
     video_data = main_utils(
         youtube_api_key=os.getenv("YOUTUBE_API_KEY"), video_link=video.video_url
     )
@@ -59,7 +59,7 @@ def transcript_route(video: YtPodCreate):
             )
             .execute()
         )
-        print("Response>>>: ", response)
+        print("Response>>>: ", response.data[0])
         return response.data[0]
     else:
         raise HTTPException(

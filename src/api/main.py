@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 # from utils.main import main_utils
 from .model import YtPodCreate, YtPodModel
 from .routes import transcript_route
+from ..utils.pdf_to_audio import parse_to_playai
+
 
 LOG_DIR = "logs"
 LOG_FILE = "app.log"
@@ -64,8 +66,10 @@ async def get_transcript(video: YtPodCreate):
     """ "
     Gets a youtube video's transcript
     """
-    response = transcript_route(video)
-    return response
+    response = await transcript_route(video)
+    transcript_url = response["transcript"]
+    parse_response = parse_to_playai(transcript_url)    
+    return parse_response
 
 
 if __name__ == "__main__":
