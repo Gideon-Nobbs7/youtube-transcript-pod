@@ -3,15 +3,12 @@ import os
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 
 # from utils.main import main_utils
-from ..utils.main import main_utils
-from ..utils.txt_to_pdf import generate_pdf_bytes
-from .db_config import supabase
 from .model import YtPodCreate, YtPodModel
-from .supa_store import get_file_url, upload_to_store
+from .routes import transcript_route
 
 LOG_DIR = "logs"
 LOG_FILE = "app.log"
@@ -67,39 +64,8 @@ async def get_transcript(video: YtPodCreate):
     """ "
     Gets a youtube video's transcript
     """
-    video_data = main_utils(
-        youtube_api_key=os.getenv("YOUTUBE_API_KEY"), video_link=video.video_url
-    )
-
-    if not video_data:
-        logger.warning("Youtube video or its transcript could not be found")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Video or its transcript could not be found",
-        )
-    video_title, video_transcript = video_data
-
-    generated_pdf_bytes = generate_pdf_bytes(video_transcript)
-    generated_pdf_bytes.seek(0)
-    try:
-        upload_to_store(video_title, generated_pdf_bytes.read())
-    except Exception as e:
-        logger.warning(f"Error uploading file to supabase bucket: {str(e)}")
-
-    transcript_url = get_file_url(video_title)
-
-    response = (
-        supabase.table("trypod")
-        .insert(
-            {
-                "video_title": video_title,
-                "video_url": video.video_url,
-                "transcript": transcript_url,
-            }
-        )
-        .execute()
-    )
-    return response.data[0]
+    response = transcript_route(video)
+    return response
 
 
 if __name__ == "__main__":

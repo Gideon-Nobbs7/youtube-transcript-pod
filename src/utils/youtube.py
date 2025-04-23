@@ -1,4 +1,5 @@
 import os
+import re
 
 from googleapiclient.discovery import build
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -42,7 +43,9 @@ def get_video_data(api_key, video_link):
     for item in response["items"]:
         video_id = video_id
         video_title = item["snippet"]["title"]
-        video_data.append((video_id, video_title))
+        sanitized_title = re.sub(r'[\\/*?:"<>|]', "_", video_title)
+
+        video_data.append((video_id, sanitized_title))
 
     return video_data
 
