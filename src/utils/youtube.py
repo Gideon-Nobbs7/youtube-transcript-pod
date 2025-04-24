@@ -1,6 +1,7 @@
 import os
 import re
 
+from fastapi import HTTPException
 from googleapiclient.discovery import build
 from youtube_transcript_api import YouTubeTranscriptApi
 
@@ -53,14 +54,20 @@ def get_video_data(api_key, video_link):
         video_id = video_id
         video_title = item["snippet"]["title"]
         sanitized_title = re.sub(r'[\\/*?:"<>|]', "_", video_title)
-    	
+
         video_transcript = get_video_transcript(video_id)
 
-        video_data.update({
-            "video_id": video_id,
-            "video_title": sanitized_title,
-            "video_transcript": video_transcript
-        })
+        if video_transcript or len(video_transcript) == 0:
+            video_data.update(
+                {
+                    "video_id": video_id,
+                    "video_title": sanitized_title,
+                    "video_transcript": video_transcript,
+                }
+            )
+        raise HTTPException(
+            status_code=400, detail="This video does not have a transcript"
+        )
 
     return video_data
 

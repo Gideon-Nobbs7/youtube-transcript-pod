@@ -2,7 +2,7 @@ from .db_config import supabase
 
 
 def upload_to_store(filename, file):
-    """"
+    """ "
     Func to upload to supabase bucket
     Args:
         filename: str = The title/video title of the pdf

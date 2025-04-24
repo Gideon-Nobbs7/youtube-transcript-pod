@@ -44,7 +44,7 @@ async def transcript_route(video: YtPodCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Video or its transcript could not be found",
         )
-    
+
     try:
         with generate_pdf_bytes(video_data["video_transcript"]) as pdf_bytes_generated:
             pdf_bytes_generated.seek(0)
@@ -55,7 +55,7 @@ async def transcript_route(video: YtPodCreate):
     transcript_url = get_file_url(video_data["video_title"])
 
     response = (
-        supabase.table("trypod")    
+        supabase.table("trypod")
         .insert(
             {
                 "video_title": video_data["video_title"],
