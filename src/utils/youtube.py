@@ -33,9 +33,18 @@ def get_channel_videos(api_key, channel_id):
 
 
 def get_video_data(api_key, video_link):
+    """
+    Retrieve the metadata of a youtube video
+    Args:
+        api_key: Youtube API Key
+        video_link: yotube video url
+    Returns:
+        a tuple of the video_id and a sanitized title
+    """
+
     youtube = build("youtube", "v3", developerKey=api_key)
     video_id = video_link.split("=")[1]
-    video_data = []
+    video_data = {}
 
     request = youtube.videos().list(part="id,snippet", id=video_id)
     response = request.execute()
@@ -44,8 +53,14 @@ def get_video_data(api_key, video_link):
         video_id = video_id
         video_title = item["snippet"]["title"]
         sanitized_title = re.sub(r'[\\/*?:"<>|]', "_", video_title)
+    	
+        video_transcript = get_video_transcript(video_id)
 
-        video_data.append((video_id, sanitized_title))
+        video_data.update({
+            "video_id": video_id,
+            "video_title": sanitized_title,
+            "video_transcript": video_transcript
+        })
 
     return video_data
 
@@ -73,5 +88,4 @@ def save_transcript(video_id, video_title, transcript, output_dir):
             file.write(transcript)
         print(f"Transcript saved for video {video_id}: {video_title})")
         return filename
-    else:
-        print(f"There is no transcript for video: {video_title}")
+    print(f"There is no transcript for video: {video_title}")

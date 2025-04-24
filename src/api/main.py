@@ -6,11 +6,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 
-# from utils.main import main_utils
+from ..utils.pdf_to_audio import parse_to_playai
 from .model import YtPodCreate, YtPodModel
 from .routes import transcript_route
-from ..utils.pdf_to_audio import parse_to_playai
-
 
 LOG_DIR = "logs"
 LOG_FILE = "app.log"
@@ -65,11 +63,16 @@ async def server_status():
 async def get_transcript(video: YtPodCreate):
     """ "
     Gets a youtube video's transcript
+
+    Args:
+        video: instance of the YTPodCreate model
+    Returns:
+        A parsed output from PlayAI in an audio form
     """
     response = await transcript_route(video)
     transcript_url = response["transcript"]
-    parse_response = parse_to_playai(transcript_url)    
-    return parse_response
+    parse_response = parse_to_playai(transcript_url)
+    return response
 
 
 if __name__ == "__main__":

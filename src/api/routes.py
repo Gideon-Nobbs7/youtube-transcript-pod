@@ -3,7 +3,7 @@ import os
 
 from fastapi import HTTPException, status
 
-from ..utils.main import main_utils
+from ..utils.youtube import get_video_data
 from ..utils.txt_to_pdf import generate_pdf_bytes
 from .db_config import supabase
 from .model import YtPodCreate
@@ -26,8 +26,17 @@ logger = logging.getLogger(__name__)
 
 
 async def transcript_route(video: YtPodCreate):
-    video_data = main_utils(
-        youtube_api_key=os.getenv("YOUTUBE_API_KEY"), video_link=video.video_url
+    """ "
+    The main route function to the get_transcript endpoint
+    Args:
+        video: instance of the YtPodCreate model which accepts
+               a youutube video's url
+    Returns:
+        Response model: YtPodModel (id, created_at, video_title, transcript_url)
+    """
+
+    video_data = get_video_data(
+        api_key=os.getenv("YOUTUBE_API_KEY"), video_link=video.video_url
     )
     if not video_data:
         logger.warning("Youtube video or its transcript could not be found")
@@ -35,34 +44,26 @@ async def transcript_route(video: YtPodCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Video or its transcript could not be found",
         )
-    video_title, video_transcript = video_data
-
-    pdf_bytes_generated = generate_pdf_bytes(video_transcript)
-    pdf_bytes_generated.seek(0)
-
+    
     try:
-        upload_to_bucket = upload_to_store(video_title, pdf_bytes_generated.read())
+        with generate_pdf_bytes(video_data["video_transcript"]) as pdf_bytes_generated:
+            pdf_bytes_generated.seek(0)
+            upload_to_store(video_data["video_title"], pdf_bytes_generated.read())
     except Exception as e:
-        logger.warning(f"Error uploading file to supabase bucket: {str(e)}")
+        logger.warning("Error uploading file to supabase bucket: %s", str(e))
 
-    if upload_to_bucket:
-        transcript_url = get_file_url(video_title)
+    transcript_url = get_file_url(video_data["video_title"])
 
-        response = (
-            supabase.table("trypod")
-            .insert(
-                {
-                    "video_title": video_title,
-                    "video_url": video.video_url,
-                    "transcript": transcript_url,
-                }
-            )
-            .execute()
+    response = (
+        supabase.table("trypod")    
+        .insert(
+            {
+                "video_title": video_data["video_title"],
+                "video_url": video.video_url,
+                "transcript": transcript_url,
+            }
         )
-        print("Response>>>: ", response.data[0])
-        return response.data[0]
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error uploading your transcrip, try again later.",
-        )
+        .execute()
+    )
+    print("Response>>>: ", response.data[0])
+    return response.data[0]

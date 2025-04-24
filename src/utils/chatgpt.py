@@ -3,13 +3,17 @@ from openai import OpenAI
 
 
 def get_chatgpt_category(transcript: str, client: OpenAI):
+    system_prompt = """
+    You are a helpful assistant that categorizes YouTube video transcripts into a single-word theme. 
+    Examples include Morality, Race, Technology, etc.
+    """
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant that categorizes YouTube video transcripts into a single-word theme. Examples include Morality, Race, Technology, etc.",
+                    "content": system_prompt,
                 },
                 {
                     "role": "user",
