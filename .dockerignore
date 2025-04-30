@@ -1,0 +1,15 @@
+*.zip
+
+logs
+
+.log 
+
+transcripts
+
+.ruff_cache
+
+.venv
+
+.env
+
+__pycache__

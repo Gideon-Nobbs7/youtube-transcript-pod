@@ -62,7 +62,7 @@ async def server_status():
 )
 async def get_transcript(video: YtPodCreate):
     """ "
-    Gets a youtube video's transcript
+    Gets a youtube video's transcript and generate a podcast audio
 
     Args:
         video: instance of the YTPodCreate model
@@ -75,5 +75,5 @@ async def get_transcript(video: YtPodCreate):
     return response
 
 
-if __name__ == "__main__":
-    uvicorn.run(app=app, port=8000, reload=True)
+# if __name__ == "__main__":
+#     uvicorn.run(app=app, port=8000, reload=True)
