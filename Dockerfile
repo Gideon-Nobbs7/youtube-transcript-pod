@@ -17,11 +17,14 @@ WORKDIR /app
 
 COPY --from=build /app/install /usr/local
 
-COPY . /app
-
+COPY script.sh /app/
 RUN chmod +x script.sh
 
-ENTRYPOINT [ "./script.sh" ]
+COPY . /app
+
+RUN ls -la /app/script.sh
+
+ENTRYPOINT [ "/app/script.sh" ]
 
 
 # =========== Production Stage =============#
@@ -36,12 +39,14 @@ RUN useradd -r nduser
 
 COPY --from=build /app/install /usr/local
 
+COPY script.sh /app/
+RUN chmod +x script.sh
+
 COPY --chown=nduser . /app/
 
 RUN chmod -R 755 /app
 
-RUN chmod +x script.sh
-
 USER nduser
 
-ENTRYPOINT [ "./script.sh" ]
+RUN ls -la /app/script.sh
+ENTRYPOINT [ "/app/script.sh" ]

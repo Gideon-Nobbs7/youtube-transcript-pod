@@ -11,10 +11,9 @@ services:
     volumes:
       - type: bind
         source: ./src 
-        target: /app/
+        target: /app/src
     env_file:
       - ./.env
-
 
 networks:
   yt_pod_network:

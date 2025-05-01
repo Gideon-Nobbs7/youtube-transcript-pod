@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Give permission with chmod +x script.sh
 
 echo "Starting Youtube Transcript Pod app..."
