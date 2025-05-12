@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -5,8 +6,9 @@ from fastapi import HTTPException, status
 
 from ..utils.youtube import get_video_data
 from ..utils.txt_to_pdf import generate_pdf_bytes
+from ..utils.redis import cache
 from .db_config import supabase
-from .model import YtPodCreate
+from .schema import YtPodCreate
 from .supa_store import get_file_url, upload_to_store
 
 LOG_DIR = "logs"
@@ -24,6 +26,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+redis_cache = cache()
 
 async def transcript_route(video: YtPodCreate):
     """ "
@@ -38,6 +41,7 @@ async def transcript_route(video: YtPodCreate):
     video_data = get_video_data(
         api_key=os.getenv("YOUTUBE_API_KEY"), video_link=video.video_url
     )
+    print("Video Data:>>>--", video_data)
     if not video_data:
         logger.warning("Youtube video or its transcript could not be found")
         raise HTTPException(
@@ -58,6 +62,7 @@ async def transcript_route(video: YtPodCreate):
         supabase.table("trypod")
         .insert(
             {
+                "name": video.name,
                 "video_title": video_data["video_title"],
                 "video_url": video.video_url,
                 "transcript": transcript_url,
@@ -67,3 +72,30 @@ async def transcript_route(video: YtPodCreate):
     )
     print("Response>>>: ", response.data[0])
     return response.data[0]
+
+
+
+async def get_transcript_route(id: str):
+    cached_key = f"video_id:{id}"
+    cached_data = redis_cache.get(cached_key)
+    if not cached_data:
+        response = (
+            supabase.table("trypod")
+            .select("id", "name", "video_title", "video_url")
+            .eq("id", id)
+            .execute()
+        )
+
+        if not response:
+            raise HTTPException(
+                status_code=400,
+                detail="Try again"
+            )
+
+        cached_data = json.dumps(response.data[0])
+        redis_cache.setex(cached_key, 15, cached_data)
+
+        return response.data[0]
+    
+    return json.loads(cached_data)
+    

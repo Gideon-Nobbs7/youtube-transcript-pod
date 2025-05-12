@@ -50,14 +50,26 @@ def get_video_data(api_key, video_link):
     request = youtube.videos().list(part="id,snippet", id=video_id)
     response = request.execute()
 
+    if not response["items"]:
+        raise HTTPException(
+            status_code=404,
+            detail="Video not found"
+        )
+
     for item in response["items"]:
         video_id = video_id
         video_title = item["snippet"]["title"]
         sanitized_title = re.sub(r'[\\/*?:"<>|]', "_", video_title)
 
-        video_transcript = get_video_transcript(video_id)
+        try:
+            video_transcript = get_video_transcript(video_id)
+            print("Video data from func", video_data)
 
-        if video_transcript or len(video_transcript) == 0:
+            if not video_transcript:
+                raise HTTPException(
+                    status_code=400, detail="This video does not have a transcript"
+                )
+            
             video_data.update(
                 {
                     "video_id": video_id,
@@ -65,9 +77,11 @@ def get_video_data(api_key, video_link):
                     "video_transcript": video_transcript,
                 }
             )
-        raise HTTPException(
-            status_code=400, detail="This video does not have a transcript"
-        )
+        except Exception as e:
+            print(f"Error from {str(e)}")
+            raise HTTPException(
+                    status_code=400, detail="This video does not have a transcript or not fetched"
+                )
 
     return video_data
 

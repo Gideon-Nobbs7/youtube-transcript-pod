@@ -5,10 +5,11 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
+from functools import lru_cache
 
 from ..utils.pdf_to_audio import parse_to_playai
-from .model import YtPodCreate, YtPodModel
-from .routes import transcript_route
+from .schema import YtPodCreate, YtPodModel, YtPodOut
+from .routes import transcript_route, get_transcript_route
 
 LOG_DIR = "logs"
 LOG_FILE = "app.log"
@@ -58,9 +59,9 @@ async def server_status():
     "/transcript",
     response_model=YtPodModel,
     status_code=201,
-    summary="Get a transcript",
+    summary="Generate a transcript",
 )
-async def get_transcript(video: YtPodCreate):
+async def generate_transcript(video: YtPodCreate):
     """ "
     Gets a youtube video's transcript and generate a podcast audio
 
@@ -71,7 +72,18 @@ async def get_transcript(video: YtPodCreate):
     """
     response = await transcript_route(video)
     transcript_url = response["transcript"]
-    parse_response = parse_to_playai(transcript_url)
+    # parse_response = parse_to_playai(transcript_url)
+    return response
+
+
+@app.get(
+    "/get-transcript/{id}",
+    response_model=YtPodOut,
+    status_code=200,
+    summary="Get the transcript data"
+)
+async def get_transcript_from_db(id: str):
+    response = await get_transcript_route(id)
     return response
 
 
