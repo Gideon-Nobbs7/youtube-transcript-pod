@@ -3,6 +3,6 @@ import redis
 
 def cache():
     return redis.Redis(
-        host="redis",
+        host="redis-master",
         port=6379
     )

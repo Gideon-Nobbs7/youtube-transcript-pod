@@ -15,19 +15,32 @@ services:
     env_file:
       - ./.env
   
-  redis:
+  redis-master:
     image: redis:alpine
-    container_name: yt_pod_redis
+    container_name: yt_pod_redis_master
     networks:
       - yt_pod_network
     ports:
       - 6379:6379
     volumes:
-      - redis-data:/data
+      - redis-master-data:/data
     restart: unless-stopped
+  
+  redis-slave1:
+    image: redis:alpine
+    container_name: yt_pod_redis_slave_1
+    networks:
+      - yt_pod_network
+    ports:
+      - 6479:6379
+    volumes:
+      - redis-slave1-data:/data
+    restart: unless-stopped
+    command: redis-server --slaveof redis-master 6379 
    
 
 volumes:
-  redis-data:
+  redis-master-data:
+  redis-slave1-data:
 networks:
   yt_pod_network:
